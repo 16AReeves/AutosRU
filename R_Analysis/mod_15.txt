@@ -1,0 +1,276 @@
+# Notes for R
+# Two fundamental components to R prog: data structures and functions
+	# R uses data structures to store values and properties
+	# R uses functions to perform operations
+# Two types of data structures
+	# Named Values - value that has been given a name
+	# Vectors - R's version of arrays, where a list of #s 
+	# are assigned a location and stored as a single data structure
+# Ex: Create a data structure using an assignment (operator: "<-") statement 
+	# (creating a variable)
+	#   x <- 3
+		# x now has the value of 3, and this value can be changed 
+		# later on in the program (all objects r mutable(changeable)
+
+# Another data stucture in R is the Numeric Vector
+	# Numeric Vector - ordered list of numbers, which can be called 
+		# using the "c()" function. c ~ concatenate
+	# ex: numlist <- c(0,1,2,3,4,5)
+# Advanced data structures
+	# matrices - vector of vectors (linear algebra) [same data type]
+	# data frame - like a pandas dataframe with different columns of data
+	# tibble - recent addition thanks to tidyverse packages in R
+		# Tibbles optimize data frames with extra metadata and features.
+		# Previously, only matrix objects were used for specific analyses
+# Four components of a R F(x)
+	# f(x)s used sofar: install.packages() & c()  [see above]
+	# f(x) syntax
+#function_name <- function(arg1,arg2,...){
+	#<Body of F(x)>
+#return <RETURN VALUE>
+	# function_name = name of f(x)
+	# arg1+ since R can take in as many arg as needed
+	# F(x) body: data structures, if statements, logical statements
+	# return statement: last evaluated statement 
+		# before returning the resulting value out of the f(x)
+
+# read in a csv using: read.csv()
+	#many types: 
+		# comma files: read.csv()
+		# tab files: read.delim()
+		# table files: read.table()
+	#some required arg: file, header, sep, check.names, stringsAsFactors
+
+# read in the demo csv (can use full file path if file isn't in working directory)
+demo_table <- read.csv(file='demo.csv', check.names=F , stringAsFactors = F) 
+	#shortcut to run the line/pane: CTRL + enter
+
+# API Call resulting in JSON file [library(jsonlite) import this at start of script]
+	# if console throws red error using ^^^ then try install.packages()
+
+# read a JSON file into R
+demo_table2 <- fromJSON(txt='demo.json')
+	# only txt arg required to read in data
+
+# Demo on slicing and selecting data:
+
+#Vector subsetting using [] notation
+x <- c(3,3,2,2,5,5,8,8,9)
+x[3] # index for R starts at 1 not 0 like python output = 2
+
+# select data from two-dim data structures, like matrices, dataframes, tibbles
+demo_table[3,"Year"] # [row,column]
+# or use numerical input: demo_table[3,3]
+	# can use either method in R
+
+# select data like selecting data in a dataframe in pandas
+# $ operator allows us to select columns from any 2-D R data structure as single vector
+	# similar to selecting a series in pandas
+demo_table$"Vehicle_Class"
+# after selecting the single vector, use [] to select a single value
+demo_table$"Vehicle_Class"[2]
+
+
+# Multiple operators to filter data, look up chart in google or 15.2.4
+
+
+# Most common way to filter and subset a dataset in R is [] notation
+	# use logical statements to assert our row&columns
+filter_table <- demo_table2[demo_table2$price > 10000,]
+	# comma is necessary to subset by rows, adding column names after the comma specifies the columns to select
+	# if no logical statement exists, R defaults to returning all elements in the dimension
+
+# if filtering with more complicated logic than above (i.e. >10000) 
+	# then use the subset() to filter the data
+# subset() uses a few arg: x, subset, select
+	# x=data, subset=logical statements, select=certain columns, all columns if blank
+filter_table2 <- subset(demo_table2, price > 10000 & drive == "4wd" & "clean" %in% title_status) #filter by price and drivetrain
+	# if [] were used for the above, it would look like this:
+		#filter_table3 <- demo_table2[("clean" %in% demo_table2$title_status) & (demo_table2$price > 10000) & (demo_table2$drive == "4wd"),]
+
+# Sample Data in R
+# if need random sample of data set to reduce bias then use sample()
+	# few arg to create a sampled vector from a larger vector: x, size, replace
+		# x=data, size=# of sample points, replace=T/F to select if values r unique, F=unique
+sample(c("cow", "deer", "pig", "chicken", "duck", "sheep", "dog"), 4)
+
+#when sampling a 2-D d.structure, supply index of each row for sampling
+	# (:) operator: create # vector sample length as #of rows in dataframe
+	# sample() to sample a list of indices from our first vector
+	# use [] to retrieve dataframe rows from sample lsit
+
+#1: count # of rows in a dataframe
+num_rows <- 1:nrow(demo_table)
+
+#2: sample 3 rows of the above dataframe
+sample_rows <- sample(num_rows, 3)
+
+#3: retrieve the requested data within the demo_table
+demo_table[sample_rows,]
+
+# combine all 3 steps at once
+demo_table [sample(1:nrow(demo_table),3),]
+
+
+# All about the Tidyverse Package
+
+# contains libraries like dplyr, tidyr, and ggplot2
+	# these work together to simplify creating:
+	# transformed data columns, grouping data using factors,
+	# reshaping 2-D d.structure, visualizing our results using plots
+
+
+# Transform data columns
+
+# dplyr library helps transform R data
+	# contains a wide variety of f(x) that can be chained together
+	# to transform data quickly and easily.
+	# can chain together f(x) using the pipe operator (%>%)
+	# to transform a dataframe and add calc columns: use mutate()
+
+# mutate() is a series of small assignment statements separated by ,'s
+	# appears as a new column in the dataframe
+demo_table <- demo_table %>% mutate(Mileage_per_Year=Total_Miles/(2020-Year),IsActive=TRUE) # add columns to original dataframe
+
+
+# to summarize dataframes in R
+# Grouping Data
+
+# use dplyr's group_by() 
+	# which factor (or list) to group the data frame by
+	# after using group_by(), can summarize() to create columns in a new dataframe
+
+summarize_demo <- demo_table2 %>% group_by(condition) %>% summarize(Mean_Mileage=mean(odometer), .groups='keep') #create summary table
+	# .groups meaning (control the grouping result)
+		# drop_last == drop the last grouping level (default)
+		# drop == drop all grouping levels and return a tibble
+		# keep == preserves the grouping of the input
+		# rowwise == turns each row into it's own group
+
+# Reshape Data
+	# sometimes the shape/design of a dataframe can be too overcomplicated for libraries&f(x)
+	
+	# tidyr library has the gather() & spread() f(x) 
+		# gather transforms a wide dataset into a long dataset
+		# spread transforms a long into a wide
+	
+		# also useful: pivot_longer() [lengthens # of rows & decreases the columns] & pivot_wider() [reverse]
+
+# gather f(x) req: data, key, value, [...]
+	# data = dataset
+	# key = name of variable column that the original wider data frame will collapse into
+	# value = name of new column derived from original dataframe results
+	# ... = list of columns that will collapse into the key column
+
+
+demo_table3 <- read.csv('demo2.csv', check.names = F, stringAsFactors = F)
+
+
+# gather data from a wide chart and reshape the data
+long_table <- gather(demo_table3, key="Metric", value="Score", buying_price:popularity)
+
+	# or in the R console:
+# long_table <- demo_table3 %>% gather(key="Metric", value="Score", buying_price:popularity)
+	# collapsed all of the survery metrics into one metric column
+	# all of the values into a score column
+
+# gather data in long format to make a wide table using spread()
+	# spread req: data, key, value, fill
+		# data=wish to reshape
+		# key=variable column to be spread out
+		#value=value column that fills in the new variable column w/
+		#fill=optional to set any empty rows to a default value
+wide_table <- long_table %>% spread(key="Metric",value="Score")
+
+# How to check if two tables are equal, using all.equal()
+all.equal(demo_table3,wide_table)
+	# if it throws an error sort the columns using order() & colnames():
+table <-demo_table3[,order(colnames(wide_table))]
+	# or use colnames() & [] only
+# table <- demo_table3[,(colnames(wide_table))] # , indicates selecting all rows
+
+	
+# Visualizating Data in R using ggplot2
+
+
+
+### Going forward this is just for notes:
+
+# When you have two components of a stat analysis, tto infer the third is simple using a stat test lookup table: 15.4.1
+	# also downloaded cheat sheet
+
+Two types of stat data types:
+	Categorical
+		represents data characteristics or qualitative descriptions.
+			collected in forms of: strings, bool, encoded numbers as categories
+		Three subtypes:
+			dichotomous data
+				collected from either one of two categories: online survey, or bool values (T/F)
+			ordinal datta
+				ranked order
+					ordinal data has a sequence, but don't necessarily know the values between each point
+					collected on a value scale: movie rankings, survey results, and Likert Scale
+						Likert Scale: part of Sociology for questionnaries, used to scale responses
+					allows for comparative analysis b/c it combines qualitative prop of labels to prop of scale
+					Types of tests: Mann-Whitney U Test and Kruskal-Wallis H Test (compare two orinal data sets)
+			nominal data
+				data used as labels or names for other measures
+					can be as individual as an ID # to a general list of three options
+					has no ranking like ordinal data
+					used w/ more quantitative data type to perform an analysis
+					can be transformed using a grouping f(x) to decrease complexity of dataset
+	Numerical
+		is obtained by taking a measurement from an instrument or by counting
+			used to perform quantitative analysis that can produce the probability of an outcome 
+				or quantify the relationship between categories
+		Two primary types:
+			Continuous Data
+				can be subdivided infinitely.
+					usually recorded with decimal places to match precision of the measurement
+					almost all stat tests and models use continuous data to generate precise results
+			Interval Data
+				spaced out evenly on a scale, also known as interval data and does not use decimal places and can't be subdivided like continous data
+					can be generated through rounding continuous data at the cost of losing precision
+					can be used by most stat models as either quantitative or qual variable, depending on use
+
+# Back to R notes
+	looking at a new dataset in R: use head() to explore a sample of the first set of the data
+	can look at an individual column using the $ operator
+	or since we're using RStudio, can look at a full dataframe by selecting it in the environment pane
+
+
+When numerical data is considered to be normally distributed, the probability of any data point follows the 68-95-99.7 rule, stating that 68.27%, 95.45%, and 99.73% (effectively 100%) of the values lie within one, two, and three standard deviations of the mean, respectively.
+
+
+In statistics, the central limit theorem is a key concept that states if you take sufficiently large samples of data from a dataset with mean μ (mu) and standard deviation σ (sigma), then the distribution will approximate normal distribution. Therefore, if we are using relatively large sample sizes, we should expect data to become more normally distributed.
+
+Transform our data values by normalization, using another numerical variable, or by transforming the data using an operator. The concept of transforming skewed data is very popular with scientists who deal with datasets where values can differ by orders of magnitude. One of the easiest means of transforming data is using a log-transform, where each value in the numeric dataset is transformed taking either natural log, or log10. By using a log-transformation, the effects of extreme values are reduced, and this transformation can help make each distribution tail more symmetrical.
+
+
+Stat Basics (Hypothesis Testing)
+	null hypothesis: H0: generally a statement that can be explained by random chance
+	alternate hypothesis: Ha: is generally the statement that is influenced by non-random events
+
+p-value: prob value that tells us the likelihood that we would see similar results if we retested if null hypt is true
+compared against significance level: predetermined cutoff. assumed to always be 0.05 unless otherwise stated
+
+Incorrect hypt selection can fall into two categories:
+	type 1 error (false positive) - an error resulting in rejecting the null when it is actually true
+		the obs and measurements used in our test should have been attributed to random chance, but bias w/ something else happened
+		limited by: making significance level smaller
+	type 2 error (false negative): fail to reject the null when it is false.
+		analysis shows it was due to random chance, but they weren't. 
+		limited by: increasing the power of the analysis: adding additional measurements or obs to the analysis
+
+
+Ideal dataset:
+	population dataset: contains all possible elements of a study or experiment: every possible outcome, condition, or consideration
+		nearly impossible to generate: so we use a sample or subsett of the pop dataset 
+	to determine if it's a pop or sample dataset: compare mean and stdev
+		ideally: sample dataset will have a similar distribution to the pop data, relatively equal
+		achieve this by: generating a random sampling of the data using sample() or sample_n()
+			when numerical vector: sample()
+			when 2-D dataset: sample_n() #n rows from the table
+
+
+sample_n in R req two arguments: tbl=input table, and size=number of rows to return
