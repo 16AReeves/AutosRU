@@ -1,6 +1,6 @@
 # MechaCar_Statistical_Analysis
 ---
-## Module 15 using RStudio and Statistics to Analyze MechaCar Data
+## Module 15: using RStudio and Statistics to Analyze MechaCar Data
 ---
 ### Linear Regression to Predict MPG
 ---
